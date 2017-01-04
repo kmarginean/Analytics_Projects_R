@@ -1,3 +1,32 @@
+R Lesson 2 - Charts & Graphs
+References:
+Black - Chapter 2 Charts and Graphs (pp. 52-96)
+(OPTIONAL) Lander Chapter 15 Basic Statistics (pp. 187-189)
+
+Data Set: home_prices.csvView in a new window
+
+Description: This data file is derived from a random sample of home resale records maintained by realtors. There are 117 observations and eight variables:
+
+PRICE = Selling price ($hundreds)
+SQFT = Square feet of living space
+YEAR = Year of construction (year)
+BATHS = Number of bathrooms
+FEATS = Number out of 11 features (dishwasher, refrigerator, microwave, disposal, washer, intercom, skylight(s), compactor, dryer, handicap fit, cable TV access)
+NBR = Located in northeast sector of city (YES) or not (NO)
+CORNER = Corner location (YES) or not (NO)
+TAX = Annual taxes ($)
+Exercises:
+
+For the following exercises use hist(), plot(), boxplot() and par() functions supplied by R.
+Construct a histogram for PRICE. Describe the distribution shape.
+Construct a histogram for TAX. Describe the distribution shape.
+Construct a scatterplot displaying TAX versus PRICE. Is there a relationship?
+Construct a stem-and-leaf plot for TAX using stem(). To aid in the interpretation of the plot, define X= TAX/100. Round X to one digit using round() and plot stem(X). Then try it directly on TAX and compare the results.
+Use the par() and mfrow() or mfcol() functions to construct a window with two rows and one column showing the histograms for PRICE and TAX.
+For the following exercises use hist() and, within hist(), breaks().
+Construct a histogram for PRICE starting the first class at 1300 ($hundreds) with a class width of 600 ($hundreds).
+Construct a histogram for TAX starting the first classat $500with a class width of $500.
+
 # Solution for Lesson_2_Exercises_Using_R
 
 # read the comma-delimited text file creating a data frame object in R
