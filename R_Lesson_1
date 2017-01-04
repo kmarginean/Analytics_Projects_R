@@ -1,3 +1,30 @@
+R Lesson 1 - Introduction to Statistics
+References
+
+Black - Chapter 1 Introduction to Statistics (pp. 3-49)
+(OPTIONAL) Lander - Chapter 4 Basics of R (pp. 35-51) and Chapter 6 Reading Data into R (pp. 73-81)
+
+Data set: home_prices.csvView in a new window
+
+Description: This data file is derived from a random sample of home resale records maintained by realtors. There are 117 observations and eight variables:
+
+PRICE = Selling price ($hundreds)
+SQFT = Square feet of living space
+YEAR = Year of construction (year)
+BATHS = Number of bathrooms
+FEATS = Number out of 11 features (dishwasher, refrigerator, microwave, disposal, washer, intercom, skylight(s), compactor, dryer, handicap fit, cable TV access)
+NBR = Located in northeast sector of city (YES) or not (NO)
+CORNER = Corner location (YES) or not (NO)
+TAX = Annual taxes ($)
+Exercises:
+
+What are the measurement levels of each of the eight variables?
+Should any variable have its values changed to better reflect its true nature?
+For the variable PRICE, select a simple random sample of size 12 from the file. Save this sample in a vector named SRS. Print the values in SRS and compute the mean value. (For random sampling, see Lander pp.187-188, Stowell pp. 44 and Verzani pp. 219-220.)
+For the variable PRICE, select a systematic sample of twelve observations. Start with the seventh observation and pick every 10th observation thereafter (i.e. 7, 17, 27,..). You should end with the 117th observation. Save the sample in a vector named SS. Print the values SRS and compute the mean value. (For systematic sampling, refer to page 283 of Lander for seq(from,to,by=) and Verzani pp. 28-29. Use this to define a vector of indices for selection.)
+Examine the printed values and mean values obtained from the two sampling procedures. Do you see a difference? (Try the commands summary(SRS) and summary(SS).
+Create boxplots for SRS and SS using boxplot(). How do the two samples compare?
+
 # Solution for Lesson_1_Exercises_Using_R
 
 # read the comma-delimited text file creating a data frame object in R
