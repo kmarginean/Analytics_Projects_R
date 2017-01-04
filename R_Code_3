@@ -1,0 +1,367 @@
+# Predict 401 Data Analysis Assignment #3
+
+# The first part of the assignment deals with a simulation study.  The second
+# part involves data analysis.
+
+#------------------------------------------------------------------------------
+# Part 1: Investigation of distribution convergence for different sample sizes.
+# Appendix A
+#------------------------------------------------------------------------------
+
+require(moments)
+
+# Plot the chi square density function. mu equals the expectation which is the
+# degrees of freedom for the chi square density.
+
+mu <- 1  # This is where different mean values may be substituted.
+
+#-----------------------------------------------------------------------------
+limit <- round(0.9*mu + 11)   # This generates a plotting limit.
+
+X <- seq(1,2*limit)/2   # This generates values for computing the density.
+plot(X, dchisq(X, df = mu, ncp = 0), type = "b",  xlim = c(0, limit),
+     main = "Chi Square Density")
+
+#-------------------------------------------------------------------------
+# Evaluation of rate of converence for different selected sample sizes n.  
+# This is the resampling portion of the program which demonstrates how well
+# the central limit theorem works for the selected sample size.
+# For the chi square distribution the mean is mu and variance is 2mu.
+
+n <- 200     # n is the sample size which is changed for the assignment.
+
+# Define vectors d.mean and d.t for data storage.
+N <- 10000  # N is the number of iterations for bootstrapping.
+d.mean <- numeric(N)
+d.t <- numeric(N)
+
+for (i in 1:N)
+{
+  x <- rchisq(n, mu, ncp = 0)              # x is a vector of random values.
+  d.mean[i] <- mean(x)                     # d.mean stores mean values.
+  d.t[i] <- (mean(x)-mu)/(sd(x)/sqrt(n))   # d.t stores t-statistic values.
+  } 
+
+hist(d.mean, main = "Sampling Distribution of Mean Values")
+abline(v = mu, col = "green", lty = 2)  # mean of chi square distribution 
+
+# Characterization of the sampling distribution of the mean.
+mean(d.mean)  # The mean of the sampling distribution should be close to mu.
+var(d.mean)   # Variance of the sampling distribution.
+2*mu/n        # The sampling variance should be close to 2mu/n.
+
+# The sampling distribution for the mean should resemble a normal distribution.
+qqnorm(d.mean)
+qqline(d.mean)
+skewness(d.mean)  # Save the skewness value for each mu and n combination.
+kurtosis(d.mean)
+
+#----------------------------------------------------------------------
+# Sampling distribution of the t-statistic.
+
+hist(d.t, main = "Sampling Distribution of t-statistic")
+abline(v = 0.0, col = "green", lty = 2)
+
+#-------------------------------------------------------------------------
+# Assume a t distribution with mean zero and degrees of freedom n-1.
+# Calculate the proportion of the resampled t-distribution in the lower tail.
+
+sum(d.t < qt(0.05, df=n-1, lower.tail = TRUE))/N
+
+# Save the one-sided proportion for each combination of mu and n.
+
+# This simulation makes it apparent that with an asymmetric distribution a
+# large sample size is needed for the t-statistic to work reasonably well.
+
+#------------------------------------------------------------------------
+#------------------------------------------------------------------------
+# This section introduces the bootstrap approach.  Take a random sample of
+# size n. Resample with replacement N times calculating the mean value each
+# time. Form the sampling distribution for these mean values.
+set.seed(123)  # Keep this seed so that results correspond to the answers.
+
+mu <- 1
+n <- 200  #  This is the sample size which can be changed for the assignment.
+
+# First a simple random sample is taken from the population.
+srs <- rchisq(n, mu, ncp = 0)
+# srs is the initial sample which is resampled for the bootstrap.
+
+# Calculate the sample mean and standard deviation for use later.
+mu.boot <- mean(srs)
+std.boot <- sd(srs)
+
+# Produce the histogram of the simple random sample srs.
+hist(srs)
+
+# Confidence interval for the mean using srs and t-statistic.
+t.test(srs, conf.level=0.95, alternative = c("two.sided"))
+# We will compare to this confidence interval.
+#-------------------------------------------------------------------------
+# What follows is bootstrap resampling from the simple random sample.
+
+# Define vectors for storage purposes.
+my.boot <-numeric(N)
+t.my.boot <- numeric(N)
+
+for (i in 1:N)
+{
+x <- sample(srs, n, replace = TRUE)
+my.boot[i] <- mean(x)
+t.my.boot[i] <- (mean(x)-mu.boot)/(sd(x)/sqrt(n))
+}
+
+hist(my.boot, main = "Bootstrap distribution of mean values")
+abline(v= mu, col = "green", lty = 2)
+qqnorm(my.boot)
+qqline(my.boot)
+
+#----------------------------------------------------------------------
+# Percentile bootstrapping confidence interval.
+round(quantile(my.boot, prob = c(0.025,0.975)), digits = 3)
+
+#----------------------------------------------------------------------
+# Evaluate performance of t-statistic.
+hist(t.my.boot, main = "Bootstrap distribution of t_statistic")
+abline(v = 0, col = "green", lty = 2)  # distribution mean
+
+# Determine a two-sided confidence interval using bootstrap t distribution.
+Q1 <- quantile(t.my.boot, prob = c(0.025), names = FALSE)
+Q2 <- quantile(t.my.boot, prob = c(0.975), names = FALSE)
+round(mu.boot - Q2*(std.boot/sqrt(n)), digits = 3)
+round(mu.boot - Q1*(std.boot/sqrt(n)), digits = 3)
+
+#----------------------------------------------------------------------
+# Assume a t distribution with mean zero and degrees of freedom n-1.
+# Calculate the proportion of the bootstrap t-distribution in the lower tail.
+
+sum(t.my.boot < qt(0.05, df=n-1, lower.tail = TRUE))/N
+# Save the one-sided proportion.
+
+#-----------------------------------------------------------------------
+# Part 2
+# Appendix B
+#-----------------------------------------------------------------------
+# Analyzing the Databases Problem 2 page 294
+
+hospital <- read.csv(file.path("c:/RBlack/","Hospital.csv"),sep=",")
+str(hospital)
+require(moments)
+
+# EDA on census reveals an asymmetric distribution.
+census <- hospital$Census
+summary(census)
+hist(census)
+boxplot(census)
+skewness(census)
+qqnorm(census)
+qqline(census)
+
+# For what follows we will consider census a sample from a larger population.
+# Construct two-sided confidence interval using t-statistic.  The following
+# calculation gives a traditional t-statistic confidence interval using 
+# 95% and 99% for comparison.
+t.test(census, conf.level = 0.95, alternative = c("two.sided"))
+t.test(census, conf.level = 0.99, alternative = c("two.sided"))
+
+# Set the stage for resampling.
+mu <- mean(census)
+n <- length(census)
+N <- 10^4
+census.mean<-numeric(N)
+census.t <- numeric(N)
+set.seed(123)
+
+for (i in 1:N)
+{
+  x <- sample(census,n,replace = TRUE)
+  census.mean[i] <- mean(x)
+  census.t[i] <- (mean(x)-mu)/(sd(x)/sqrt(n))}
+
+# Evaluate the resampling distribution of mean values.
+
+hist(census.mean, main="Bootstrap distribution of means")
+abline(v=mean(census),col="blue",lty=2)  # observed mean
+qqnorm(census.mean)
+qqline(census.mean)
+skewness(census.mean)
+kurtosis(census.mean)
+
+# Determine two-sided confidence interval using mean bootstrap distribution.
+round(quantile(census.mean, probs=c(0.025,0.975)), digits = 2)
+
+# Bootstrap Confidence Interval based on the t-statistic.
+hist(census.t, main="Bootstrap distribution of t-statistic")
+abline(v=mu,col="blue",lty=2)  # observed mean
+Q1 <- quantile(census.t, prob=c(0.025), names = FALSE)
+Q2 <- quantile(census.t, prob=c(0.975), names = FALSE)
+round(mu -Q2*sd(census)/sqrt(n), digits = 2)
+round(mu -Q1*sd(census)/sqrt(n), digits = 2)
+
+#----------------------------------------------------------------------
+# Assume a t distribution with mean zero and degrees of freedom n-1.
+# Calculate the proportion of the bootstrap t-distribution in the lower tail.
+
+sum(census.t < qt(0.05, df=n-1, lower.tail = TRUE))/N
+# Save the one-sided proportion.
+
+#-----------------------------------------------------------------------
+#------------------------------------------------------------------------
+# Analysis of data on logarithmic scale.
+
+# EDA on census reveals a symmetric distribution with one outlier.
+census <- hospital$Census
+census <- log(census)
+summary(census)
+
+# The logarithmic transformation has produced a more symmetric distribution.
+hist(census)
+boxplot(census)
+skewness(census)
+qqnorm(census)
+qqline(census)
+mu <- mean(census)
+
+# Construct two-sided confidence interval using t-statistic.
+t.test(census,conf.level=0.95,alternative = c("two.sided"))
+
+# Evaluate the sampling distribution of the mean using bootstrap
+n <- length(census)
+N <- 10^4
+census.mean<-numeric(N)
+census.t <- numeric(N)
+set.seed(123)
+
+for (i in 1:N)
+{
+  x <- sample(census,n,replace = TRUE)
+  census.mean[i] <- mean(x)
+  census.t[i] <- (mean(x)-mu)/(sd(x)/sqrt(n))}
+
+# Determine two-sided confidence interval using mean bootstrap distribution.
+round(quantile(census.mean, probs=c(0.025,0.975)), digits = 2)
+
+# Bootstrap Confidence Interval based on the t-statistic.
+hist(census.t, main="Bootstrap distribution of t-statistic")
+abline(v=0,col="blue",lty=2)  # observed mean
+Q1 <- quantile(census.t, prob=c(0.025), names = FALSE)
+Q2 <- quantile(census.t, prob=c(0.975), names = FALSE)
+round(mu -Q2*sd(census)/sqrt(n), digits = 2)
+round(mu -Q1*sd(census)/sqrt(n), digits = 2)
+
+#----------------------------------------------------------------------
+# Assume a t distribution with mean zero and degrees of freedom n-1.
+# Calculate the proportion of the bootstrap t-distribution in the lower tail.
+
+sum(census.t < qt(0.05, df=n-1, lower.tail = TRUE))/N
+# Save the one-sided proportion.
+
+#-----------------------------------------------------------------------
+# Part 3
+# Appendix C
+#--------------------------------------------------------------------------
+# Problem 2 Page 351
+
+# Does the average hospital have more than 700 births per year?
+summary(hospital$Births)
+hist(hospital$Births)
+boxplot(hospital$Births)
+# Distribution of births is asymmetric and right skewed.
+
+# Evaluation with the bootstrap distribution
+births <- hospital$Births
+n <- length(births)
+N <- 10^4
+mu <- mean(births)
+births.t <- numeric(N)
+births.mean <- numeric(N)
+set.seed(123)
+
+for (i in 1:N)
+{
+  x <- sample(births,n,replace = TRUE)
+  births.mean[i] <- mean(x)
+  births.t[i] <- (mean(x)-mu)/(sd(x)/sqrt(n))
+}
+
+hist(births.mean)
+abline(v=700,col="red",lty=2)
+abline(v=mu,col="blue",lty=2)
+skewness(births.mean)
+
+
+# Conduct a one-sided t-test.
+births <- hospital$Births
+t.test(births, y=NULL, alternative=c("greater"), mu=700, paired=FALSE,
+       var.equal=FALSE, conf.level=0.99)
+# Result is not statistically significant.
+
+# Determine one-sided confidence interval using percentile bootstrap method.
+round(quantile(births.mean, probs=(0.01)), digits = 3)
+
+# Determine proportion below 700.
+round(sum(births.mean < 700)/N, digits = 3)
+
+# Compare to bootstrap t-test.
+hist(births.t, main="Bootstrap distribution of t-statistic")
+abline(v=0.0,col="blue",lty=2)  # observed mean
+
+Q2 <- quantile(births.t, probs = 0.99, names = FALSE)
+round(mu -Q2*sd(births)/sqrt(n), digits = 3)
+# Result is statistically significant.
+
+#----------------------------------------------------------------------
+# Assume a t distribution with mean zero and degrees of freedom n-1.
+# Calculate the proportion of the bootstrap t-distribution in the lower tail.
+
+sum(births.t < qt(0.01, df=n-1, lower.tail = TRUE))/N
+# Save the one-sided proportion.
+
+#-----------------------------------------------------------------------
+
+# Personnel question--------------------------------------------------
+# On average, do hospitals employ fewer than 900 people?
+personnel <- hospital$Personnel
+
+hist(personnel)
+boxplot(personnel)
+mu <- mean(personnel)
+
+# Distribution of personnel is asymmetric and right skewed.
+
+n <- length(personnel)
+N <- 10^4
+personnel.t<-numeric(N)
+personnel.mean <- numeric(N)
+set.seed(123)
+
+for (i in 1:N)
+{
+  x <- sample(personnel,n,replace = TRUE)
+  personnel.mean[i] <- mean(x)
+  personnel.t[i] <- (mean(x)-mu)/(sd(x)/sqrt(n))
+}
+
+hist(personnel.mean)
+abline(v=900,col="red",lty=2)
+abline(v=mu,col="blue",lty=2)
+skewness(personnel.mean)
+
+# Perform one-sided t-test.
+t.test(personnel,y=NULL,alternative=c("less"), mu=900,paired=FALSE,
+       var.equal=FALSE,conf.level=0.9)
+
+# Determine one-sided confidence interval using bootstrap distribution.
+round(quantile(personnel.mean, probs=(0.9)), digits = 3)
+
+# Determine proportion above 900.
+round(sum(personnel.mean > 900)/N, digits = 4)
+
+hist(personnel.t, main="Bootstrap distribution of t-statistic")
+abline(v=0.0,col="blue",lty=2)  # observed mean
+
+# Result is not statistically significant.
+Q1 <- quantile(personnel.t, probs = 0.1, names = FALSE)
+round(mu -Q1*sd(personnel)/sqrt(n), digits = 3)
+
+#---------------------------------------------------------------------------
